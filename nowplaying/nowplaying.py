@@ -83,7 +83,7 @@ def resolve_location(latitude: float, longitude: float) -> str:
     '''Resolve coordinates to a city name.'''
     if not latitude or not longitude:
         return 'Unknown'
-    url = f'https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json'
+    url = f'https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json' # https://nominatim.org/release-docs/latest/api/Reverse/
     data = query(url=url)
     addr = data.get('address', {})
     return addr.get('city') or addr.get('town') or addr.get('village') or addr.get('county') or 'Unknown'
