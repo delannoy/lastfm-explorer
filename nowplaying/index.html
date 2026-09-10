@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang='en'>
+
+<head>
+
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>NowPlaying</title>
+
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; background: #050505; color: #fff;
+        }
+        .bg {
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+            background-size: cover; background-position: center;
+            filter: blur(30px) saturate(1.2); z-index: 0; transition: background-image 1.5s ease-in-out;
+        }
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); z-index: 1;
+        }
+        .datetime-container {
+            position: absolute; top: 25px; left: 25px; z-index: 2;
+            text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .time-display {
+            font-size: 2.5rem; font-weight: 300; margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+        .date-display {
+            font-size: 0.9rem; color: #ccc; text-transform: uppercase;
+            letter-spacing: 1.5px; font-weight: 500;
+        }
+        .weather-container {
+            position: absolute; top: 25px; right: 25px; z-index: 2;
+            text-align: right; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            display: none;
+        }
+        .weather-temperature {
+            font-size: 2.5rem; font-weight: 300; margin-bottom: 2px;
+            letter-spacing: 1px; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+        }
+        .weather-description {
+            font-size: 0.9rem; color: #ccc; text-transform: uppercase;
+            letter-spacing: 1.5px; font-weight: 500;
+        }
+        .weather-location {
+            font-size: 1rem; color: #e0e0e0; font-weight: 500; margin-bottom: 5px;
+        }
+        .weather-forecast {
+            font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 5px; letter-spacing: 1px;
+        }
+        .stats-container {
+            position: absolute; bottom: 20px; left: 25px; z-index: 2;
+            text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .stat-label {
+            font-size: 0.75rem; color: rgba(255,255,255,0.5);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .stat-value {
+            font-size: 1rem; color: #e0e0e0; font-weight: 500;
+        }
+        .content {
+            position: absolute; z-index: 2; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center;
+        }
+        .album-art {
+            width: 40vh; height: 40vh; max-width: 400px; max-height: 400px;
+            object-fit: cover; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border-radius: 8px; margin-bottom: 40px; transition: opacity 0.5s;
+            display: none;
+        }
+        .track-container {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin: 0 0 10px 0; max-width: 80%;
+        }
+        .track-name {
+            font-size: 3rem; font-weight: 700; margin: 0 0 10px 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5); letter-spacing: -1px;
+            max-width: 80%;
+        }
+        .loved-icon {
+            font-size: 2.2rem; color: #ff3b3b;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5); display: none;
+        }
+        .artist-name {
+            font-size: 1.75rem; color: #e0e0e0; margin: 0 0 10px 0;
+            font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .album-name {
+            font-size: 1.25rem; color: #aaa; font-style: italic;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .hidden-cursor, .hidden-cursor * { cursor: none !important; }
+        .status {
+            position: absolute; bottom: 20px; right: 25px;
+            font-size: 0.8rem; color: rgba(255,255,255,0.4); z-index: 2;
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class='bg' id='bg'></div>
+
+    <div class='bg-overlay'></div>
+
+    <div class='datetime-container'>
+        <div id='time' class='time-display'>--:--</div>
+        <div id='date' class='date-display'>Loading...</div>
+    </div>
+
+    <div id='weather-container' class='weather-container'>
+        <div id='weather-location' class='weather-location'>Loading...</div>
+        <div class='weather-temperature'>
+            <span id='weather-emoji'></span>
+            <span id='weather-temperature'>--°C</span>
+        </div>
+        <div id='weather-description' class='weather-description'>Loading...</div>
+        <div id='weather-forecast' class='weather-forecast'>H: --° L: --°</div>
+    </div>
+
+    <div class='stats-container'>
+        <div>
+            <div class='stat-label'>Total Listens</div>
+            <div id='total-scrobbles' class='stat-value'>--</div>
+        </div>
+        <div style='margin-top: 5px;'>
+            <div class='stat-label'>Track Listens</div>
+            <div id='track-plays' class='stat-value'>--</div>
+        </div>
+    </div>
+
+    <div class='content'>
+        <img id='cover' class='album-art' src=''>
+        <div class='track-container'>
+            <div id='track' class='track-name'>Waiting for music...</div>
+            <div id='loved' class='loved-icon'>♥</div>
+        </div>
+        <div id='artist' class='artist-name'></div>
+        <div id='album' class='album-name'></div>
+    </div>
+
+    <div class='status' id='status'>CONNECTING...</div>
+
+    <script>
+
+        const MOUSE_TIMEOUT = 3 * 1000 // 3 seconds
+        const POLL_MUSIC_MS = 10 * 1000; // 10 seconds
+        const POLL_WEATHER_MS = 10 * 60 * 1000; // 10 minutes
+
+        let timeout;
+
+        document.onmousemove = function() {
+            document.body.classList.remove('hidden-cursor');
+            clearTimeout(timeout);
+            timeout = setTimeout(() => document.body.classList.add('hidden-cursor'), MOUSE_TIMEOUT);
+        };
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const dateString = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('time').innerText = timeString;
+            document.getElementById('date').innerText = dateString;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('/api/weather');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                document.getElementById('weather-location').innerText = data.location;
+                document.getElementById('weather-temperature').innerText = data.temperature + '°C';
+                document.getElementById('weather-emoji').innerText = data.emoji;
+                document.getElementById('weather-description').innerText = data.description;
+                document.getElementById('weather-forecast').innerText = '↑ ' + data.high + '° | ↓ ' + data.low + '° | ☔ ' + data.precipitation + '%';
+                document.getElementById('weather-container').style.display = 'block';
+            } catch (err) {
+                console.error('Weather error:', err);
+                document.getElementById('weather-location').innerText = 'Unknown';
+                document.getElementById('weather-temperature').innerText = '--°C';
+                document.getElementById('weather-emoji').innerText = '⚠️';
+                document.getElementById('weather-description').innerText = err.message;
+                document.getElementById('weather-forecast').innerText = '↑ --° | ↓ --° | ☔ --%';
+                document.getElementById('weather-container').style.display = 'block';
+            }
+        }
+
+        fetchWeather();
+        setInterval(fetchWeather, POLL_WEATHER_MS);
+
+        let state = null;
+
+        async function fetchNowPlaying() {
+            try {
+                const res = await fetch('/api/nowplaying');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                document.getElementById('total-scrobbles').innerText = parseInt(data.total_listens).toLocaleString();
+                document.getElementById('track-plays').innerText = parseInt(data.track_listens).toLocaleString();
+                document.getElementById('status').innerText = data.playing ? 'NOW PLAYING' : 'LAST SCROBBLE';
+                const currentState = data.track + '|' + data.artist + '|' + data.playing;
+                if (currentState === state) {
+                    return;
+                }
+                state = currentState;
+                document.getElementById('track').innerText = data.track || 'Unknown Track';
+                document.getElementById('artist').innerText = data.artist || 'Unknown Artist';
+                document.getElementById('album').innerText = data.album || '';
+                document.getElementById('loved').style.display = data.loved ? 'block' : 'none';
+                const cover = document.getElementById('cover');
+                const bg = document.getElementById('bg');
+                if (data.image) {
+                    cover.src = data.image;
+                    cover.style.display = 'block';
+                    bg.style.backgroundImage = `url(${data.image})`;
+                } else {
+                    cover.style.display = 'none';
+                    bg.style.backgroundImage = 'none';
+                }
+            } catch (err) {
+                console.error('NowPlaying error:', err);
+                document.getElementById('track').innerText = err.message;
+                document.getElementById('artist').innerText = '';
+                document.getElementById('album').innerText = '';
+                document.getElementById('cover').style.display = 'none';
+                document.getElementById('bg').style.backgroundImage = 'none';
+                document.getElementById('total-scrobbles').innerText = '--';
+                document.getElementById('track-plays').innerText = '--';
+                document.getElementById('loved').style.display = 'none';
+                document.getElementById('status').innerText = 'ERROR';
+            }
+        }
+
+        fetchNowPlaying();
+        setInterval(fetchNowPlaying, POLL_MUSIC_MS);
+
+    </script>
+
+</body>
+
+</html>
