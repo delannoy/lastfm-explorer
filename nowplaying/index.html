@@ -69,7 +69,7 @@
         .content {
             position: absolute; z-index: 2; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center;
+            text-align: center; box-sizing: border-box; padding-top: 100px;
         }
         .album-art {
             width: 40vh; height: 40vh; max-width: 400px; max-height: 400px;
@@ -179,7 +179,7 @@
 
         async function fetchWeather() {
             try {
-                const res = await fetch('/api/weather');
+                const res = await fetch('api/weather');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
@@ -207,7 +207,7 @@
 
         async function fetchNowPlaying() {
             try {
-                const res = await fetch('/api/nowplaying');
+                const res = await fetch('api/nowplaying');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
