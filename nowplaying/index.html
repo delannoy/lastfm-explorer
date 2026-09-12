@@ -326,7 +326,7 @@
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit' });
-            const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'long', weekday: 'long', year: 'numeric' });
+            const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'short', weekday: 'short', year: 'numeric' });
             DOM.time.innerText = timeString;
             if (dateString !== lastDateString) {
                 DOM.date.innerText = dateString;
