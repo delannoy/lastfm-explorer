@@ -31,19 +31,19 @@
             background: rgba(0, 0, 0, 0.4); z-index: 1;
         }
         .datetime-container {
-            position: absolute; top: 25px; left: 25px; z-index: 2;
+            position: absolute; top: 25px; left: 25px; z-index: 10;
             text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
         .time-display {
             font-size: 2.5rem; font-weight: 300; margin-bottom: 2px;
-            letter-spacing: 1px;
+            letter-spacing: 1px; display: block;
         }
         .date-display {
             font-size: 0.9rem; color: #ccc; text-transform: uppercase;
             letter-spacing: 1.5px; font-weight: 500;
         }
         .weather-container {
-            position: absolute; top: 25px; right: 25px; z-index: 2;
+            position: absolute; top: 25px; right: 25px; z-index: 10;
             text-align: right; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
             display: none;
         }
@@ -56,13 +56,14 @@
             letter-spacing: 1.5px; font-weight: 500;
         }
         .weather-location {
-            font-size: 1rem; color: #e0e0e0; font-weight: 500; margin-bottom: 5px;
+            font-size: 1rem; color: #ccc; font-weight: 500;
         }
         .weather-forecast {
-            font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 5px; letter-spacing: 1px;
+            font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 5px;
+            letter-spacing: 1px; display: block;
         }
         .stats-container {
-            position: absolute; bottom: 20px; left: 25px; z-index: 2;
+            position: absolute; bottom: 20px; left: 25px; z-index: 10;
             text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; gap: 4px;
         }
@@ -93,7 +94,7 @@
             margin: 0 0 10px 0; max-width: 80%;
         }
         .track-name {
-            font-size: 3rem; font-weight: 700; margin: 0 0 10px 0;
+            font-size: 2.5rem; font-weight: 700; margin: 0 0 10px 0;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5); letter-spacing: -1px;
             max-width: 80%; display: block;
         }
@@ -128,8 +129,52 @@
         }
         .status {
             position: absolute; bottom: 20px; right: 25px;
-            font-size: 0.8rem; color: rgba(255,255,255,0.4); z-index: 2;
+            font-size: 1.25rem; color: rgba(255,255,255,0.4); z-index: 10;
             text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .date-wrapper {
+            position: relative; display: inline-block; cursor: default;
+        }
+        .calendar-popup {
+            display: none; position: absolute; top: 100%; left: 0;
+            margin-top: 8px; width: 250px; z-index: 20;
+            background: rgba(15, 15, 15, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            text-shadow: none; color: #ddd;
+        }
+        .calendar-popup::before {
+            content: ''; position: absolute;
+            top: -15px; left: 0; right: 0; height: 15px;
+        }
+        .cal-grid {
+            display: grid; 
+            grid-template-columns: 24px repeat(7, 1fr);
+            gap: 4px; text-align: center; font-size: 0.8rem;
+        }
+        .cal-wk-num {
+            font-weight: 700; color: rgba(255, 255, 255, 0.25); font-size: 0.7rem; 
+            display: flex; align-items: center; justify-content: center; 
+            background: rgba(255,255,255,0.05); border-radius: 4px; margin-right: 4px;
+        }
+        .date-wrapper:hover .calendar-popup {
+            display: block;
+        }
+        .cal-header {
+            text-align: center; font-weight: 600; color: #fff; 
+            margin-bottom: 12px; font-size: 0.9rem; letter-spacing: 1px;
+        }
+        .cal-day-name {
+            font-weight: 700; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px;
+        }
+        .cal-day {
+            padding: 4px 0; border-radius: 4px;
+        }
+        .cal-today {
+            background: #fff; color: #000; font-weight: 700;
+        }
+        .cal-empty {
+            visibility: hidden;
         }
     </style>
 
@@ -142,26 +187,31 @@
     <div class='bg-overlay'></div>
 
     <div class='datetime-container'>
-        <div id='time' class='time-display'>--:--</div>
-        <div id='date' class='date-display'>Loading...</div>
+        <a id='time' class='time-display' href='https://time.is/' target='_blank'>--:--</a>
+        <div class='date-wrapper'>
+            <div id='date' class='date-display'>Loading...</div>
+            <div id='calendar-popup' class='calendar-popup'></div>
+        </div>
     </div>
 
     <div id='weather-container' class='weather-container'>
         <div id='weather-location' class='weather-location'>Loading...</div>
         <div class='weather-temperature'>
             <span id='weather-emoji'></span>
-            <span id='weather-temperature'>--°C</span>
+            <a id='weather-temperature' target='_blank'>--°C</a>
         </div>
         <div id='weather-description' class='weather-description'>Loading...</div>
-        <div id='weather-forecast' class='weather-forecast'>H: --° L: --°</div>
+        <a id='weather-forecast' class='weather-forecast' target='_blank'>↑ --° | ↓ --° | ☔ --%</a>
     </div>
 
     <div class='content'>
-        <img id='cover' class='album-art' src=''>
+        <a id='cover-link' target='_blank'>
+            <img id='cover' class='album-art' src=''>
+        </a>
         <div class='track-container'>
             <a id='track' class='track-name' target='_blank'>Waiting for music...</a>
             <a id='mb-track' class='mb-badge' target='_blank' title='View on MusicBrainz'></a>
-            <div id='loved' class='loved-icon'>♥</div>
+            <a id='loved' class='loved-icon' target='_blank'>♥</a>
         </div>
         <div class='info-container'>
             <a id='artist' class='artist-name' target='_blank'></a>
@@ -184,18 +234,43 @@
         </div>
     </div>
 
-    <div class='status' id='status'>CONNECTING...</div>
+    <a class='status' id='status' target='_blank'>CONNECTING...</a>
 
     <script>
+
+        const DOM = {
+            time: document.getElementById('time'),
+            date: document.getElementById('date'),
+            calendarPopup: document.getElementById('calendar-popup'),
+            weatherLocation: document.getElementById('weather-location'),
+            weatherTemperature: document.getElementById('weather-temperature'),
+            weatherEmoji: document.getElementById('weather-emoji'),
+            weatherDescription: document.getElementById('weather-description'),
+            weatherForecast: document.getElementById('weather-forecast'),
+            weatherContainer: document.getElementById('weather-container'),
+            cover: document.getElementById('cover'),
+            coverLink: document.getElementById('cover-link'),
+            bg: document.getElementById('bg'),
+            track: document.getElementById('track'),
+            mbTrack: document.getElementById('mb-track'),
+            loved: document.getElementById('loved'),
+            artist: document.getElementById('artist'),
+            mbArtist: document.getElementById('mb-artist'),
+            album: document.getElementById('album'),
+            mbAlbum: document.getElementById('mb-album'),
+            totalListens: document.getElementById('total-listens'),
+            trackPlays: document.getElementById('track-plays'),
+            status: document.getElementById('status')
+        };
 
         const MOUSE_TIMEOUT = 3 * 1000 // 3 seconds
         const POLL_MUSIC_MS = 10 * 1000; // 10 seconds
         const POLL_WEATHER_MS = 10 * 60 * 1000; // 10 minutes
 
         const MB_LOGO_SVG = `<img src="https://musicbrainz.org/favicon.ico" alt="MB" />`;
-        document.getElementById('mb-track').innerHTML = MB_LOGO_SVG;
-        document.getElementById('mb-artist').innerHTML = MB_LOGO_SVG;
-        document.getElementById('mb-album').innerHTML = MB_LOGO_SVG;
+        DOM.mbTrack.innerHTML = MB_LOGO_SVG;
+        DOM.mbArtist.innerHTML = MB_LOGO_SVG;
+        DOM.mbAlbum.innerHTML = MB_LOGO_SVG;
 
         let timeout;
 
@@ -205,16 +280,83 @@
             timeout = setTimeout(() => document.body.classList.add('hidden-cursor'), MOUSE_TIMEOUT);
         };
 
+        let lastDateString = null;
+
+        function getISOWeek(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function generateCalendar(now) {
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+            const firstDay = (new Date(year, month, 1).getDay() + 6) % 7; 
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthName = now.toLocaleDateString([], { month: 'long', year: 'numeric' });
+            let html = `<div class="cal-header">${monthName}</div><div class="cal-grid">`;
+            const dayNames = ['Wk', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+            dayNames.forEach(d => { html += `<div class="cal-day-name">${d}</div>`; });
+            const totalCells = firstDay + daysInMonth;
+            const rows = Math.ceil(totalCells / 7);
+            let d = 1;
+            for (let r = 0; r < rows; r++) {
+                const thursdayDate = new Date(year, month, (r * 7) - firstDay + 4);
+                const wk = getISOWeek(thursdayDate);
+                html += `<div class="cal-wk-num">${wk}</div>`;
+                for (let c = 0; c < 7; c++) {
+                    if (r === 0 && c < firstDay) {
+                        html += `<div class="cal-empty"></div>`;
+                    } else if (d > daysInMonth) {
+                        html += `<div class="cal-empty"></div>`;
+                    } else {
+                        const isToday = d === today ? 'cal-today' : '';
+                        html += `<div class="cal-day ${isToday}">${d}</div>`;
+                        d++;
+                    }
+                }
+            }
+            html += `</div>`;
+            DOM.calendarPopup.innerHTML = html;
+        }
+
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit' });
             const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'long', weekday: 'long', year: 'numeric' });
-            document.getElementById('time').innerText = timeString;
-            document.getElementById('date').innerText = dateString;
+            DOM.time.innerText = timeString;
+            if (dateString !== lastDateString) {
+                DOM.date.innerText = dateString;
+                generateCalendar(now);
+                lastDateString = dateString;
+            }
         }
 
         updateClock();
         setInterval(updateClock, 1000);
+
+        function setLink(element, text, url) {
+            if (text !== null) {
+                element.innerText = text;
+            }
+            if (url) {
+                element.href = url;
+            } else {
+                element.removeAttribute('href');
+            }
+        }
+
+        function setMBLink(element, url) {
+            if (url) {
+                element.href = url;
+                element.style.display = 'block';
+            } else {
+                element.style.display = 'none';
+            }
+        }
 
         async function fetchWeather() {
             try {
@@ -226,20 +368,20 @@
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                document.getElementById('weather-location').innerText = data.location;
-                document.getElementById('weather-temperature').innerText = data.temperature + '°C';
-                document.getElementById('weather-emoji').innerText = data.emoji;
-                document.getElementById('weather-description').innerText = data.description;
-                document.getElementById('weather-forecast').innerText = '↑ ' + data.high + '° | ↓ ' + data.low + '° | ☔ ' + data.precipitation + '%';
-                document.getElementById('weather-container').style.display = 'block';
+                DOM.weatherLocation.innerText = data.location;
+                setLink(DOM.weatherTemperature, data.temperature + '°C', data.current_url);
+                DOM.weatherEmoji.innerText = data.emoji;
+                DOM.weatherDescription.innerText = data.description;
+                setLink(DOM.weatherForecast, '↑ ' + data.high + '° | ↓ ' + data.low + '° | ☔ ' + data.precipitation + '%', data.forecast_url);
+                DOM.weatherContainer.style.display = 'block';
             } catch (err) {
                 console.error('Weather error:', err);
-                document.getElementById('weather-location').innerText = 'Unknown';
-                document.getElementById('weather-temperature').innerText = '--°C';
-                document.getElementById('weather-emoji').innerText = '⚠️';
-                document.getElementById('weather-description').innerText = err.message;
-                document.getElementById('weather-forecast').innerText = '↑ --° | ↓ --° | ☔ --%';
-                document.getElementById('weather-container').style.display = 'block';
+                DOM.weatherLocation.innerText = 'Unknown';
+                setLink(DOM.weatherTemperature, '--°C', null);
+                DOM.weatherEmoji.innerText = '⚠️';
+                DOM.weatherDescription.innerText = err.message;
+                setLink(DOM.weatherForecast, '↑ --° | ↓ --° | ☔ --%', null);
+                DOM.weatherContainer.style.display = 'block';
             }
         }
 
@@ -247,30 +389,6 @@
         setInterval(fetchWeather, POLL_WEATHER_MS);
 
         let state = null;
-
-        function setLink(id, text, url) {
-            const element = document.getElementById(id);
-            if (text !== null) {
-                element.innerText = text;
-            }
-            if (url) {
-                element.href = url;
-                element.style.pointerEvents = 'auto';
-            } else {
-                element.removeAttribute('href');
-                element.style.pointerEvents = 'none';
-            }
-        }
-
-        function setMBLink(id, url) {
-            const element = document.getElementById(id);
-            if (url) {
-                element.href = url;
-                element.style.display = 'block';
-            } else {
-                element.style.display = 'none';
-            }
-        }
 
         async function fetchNowPlaying() {
             try {
@@ -282,34 +400,39 @@
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                setLink('total-listens', parseInt(data.total_listens).toLocaleString(), data.user_url);
-                setLink('track-plays', parseInt(data.track_listens).toLocaleString(), data.track_library_url);
-                setLink('status', data.playing ? 'NOW PLAYING' : 'LAST LISTEN', data.user_url);
+                setLink(DOM.totalListens, parseInt(data.total_listens).toLocaleString(), data.user_url + '/library');
+                setLink(DOM.trackPlays, parseInt(data.track_listens).toLocaleString(), data.track_library_url);
+                setLink(DOM.status, data.playing ? data.user.toUpperCase() + ': NOW PLAYING' : data.user.toUpperCase() + ': LAST LISTEN', data.playing ? data.user_url + '/now' : data.user_url);
                 const currentState = data.track + '|' + data.artist + '|' + data.playing;
                 if (currentState === state) {
                     return;
                 }
                 state = currentState;
-                setLink('track', data.track || 'Unknown Track', data.track_url);
-                setLink('artist', data.artist || 'Unknown Artist', data.artist_url);
-                setLink('album', data.album || '', data.album_url);
-                setMBLink('mb-track', data.track_mb_url);
-                setMBLink('mb-artist', data.artist_mb_url);
-                setMBLink('mb-album', data.album_mb_url);
-                document.getElementById('loved').style.display = data.loved ? 'block' : 'none';
-                const cover = document.getElementById('cover');
-                const bg = document.getElementById('bg');
+                setLink(DOM.track, data.track || 'Unknown Track', data.track_url);
+                setLink(DOM.artist, data.artist || 'Unknown Artist', data.artist_url);
+                setLink(DOM.album, data.album || '', data.album_url);
+                setMBLink(DOM.mbTrack, data.track_mb_url);
+                setMBLink(DOM.mbArtist, data.artist_mb_url);
+                setMBLink(DOM.mbAlbum, data.album_mb_url);
+                if (data.loved) {
+                    DOM.loved.style.display = 'block';
+                    DOM.loved.href = data.user_url + '/loved';
+                } else {
+                    DOM.loved.style.display = 'none';
+                }
                 if (data.image) {
-                    cover.src = data.image;
-                    cover.style.display = 'block';
+                    DOM.cover.src = data.image;
+                    DOM.cover.style.display = 'block';
+                    DOM.coverLink.href = data.image;
                     bg.style.backgroundImage = `url(${data.image})`;
                 } else {
-                    cover.style.display = 'none';
-                    bg.style.backgroundImage = 'none';
+                    DOM.cover.style.display = 'none';
+                    DOM.coverLink.removeAttribute('href');
+                    DOM.bg.style.backgroundImage = 'none';
                 }
             } catch (err) {
                 console.error('NowPlaying error:', err);
-                setLink('status', 'API RECONNECTING...', null);
+                setLink(DOM.status, 'API RECONNECTING...', null);
             }
         }
 
