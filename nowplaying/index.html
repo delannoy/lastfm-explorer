@@ -207,8 +207,8 @@
 
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-            const dateString = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'long', weekday: 'long', year: 'numeric' });
             document.getElementById('time').innerText = timeString;
             document.getElementById('date').innerText = dateString;
         }
