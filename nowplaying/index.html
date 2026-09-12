@@ -9,6 +9,13 @@
     <title>NowPlaying</title>
 
     <style>
+        a {
+            color: inherit; text-decoration: none;
+            transition: opacity 0.2s ease-in-out;
+        }
+        a[href]:hover {
+            opacity: 0.6;
+        }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -64,7 +71,7 @@
             text-transform: uppercase; letter-spacing: 1px;
         }
         .stat-value {
-            font-size: 1rem; color: #e0e0e0; font-weight: 500;
+            font-size: 1rem; color: #e0e0e0; font-weight: 500; display: block;
         }
         .content {
             position: absolute; z-index: 2; top: 0; left: 0; width: 100%; height: 100%;
@@ -84,21 +91,37 @@
         .track-name {
             font-size: 3rem; font-weight: 700; margin: 0 0 10px 0;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5); letter-spacing: -1px;
-            max-width: 80%;
+            max-width: 80%; display: block;
         }
         .loved-icon {
             font-size: 2.2rem; color: #ff3b3b;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5); display: none;
         }
         .artist-name {
-            font-size: 1.75rem; color: #e0e0e0; margin: 0 0 10px 0;
-            font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 1.75rem; color: #e0e0e0;
+            font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: block;
         }
         .album-name {
             font-size: 1.25rem; color: #aaa; font-style: italic;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: block;
         }
-        .hidden-cursor, .hidden-cursor * { cursor: none !important; }
+        .info-container {
+            display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px;
+        }
+        .mb-badge {
+            display: none; width: 22px; height: 22px;
+            opacity: 0.5; transition: opacity 0.2s ease-in-out;
+            flex-shrink: 0;
+        }
+        .mb-badge:hover {
+            opacity: 1;
+        }
+        .mb-badge svg, .mb-badge img {
+            width: 100%; height: 100%; border: none; object-fit: contain;
+        }
+        .hidden-cursor, .hidden-cursor * {
+            cursor: none !important;
+        }
         .status {
             position: absolute; bottom: 20px; right: 25px;
             font-size: 0.8rem; color: rgba(255,255,255,0.4); z-index: 2;
@@ -129,25 +152,32 @@
         <div id='weather-forecast' class='weather-forecast'>H: --° L: --°</div>
     </div>
 
-    <div class='stats-container'>
-        <div>
-            <div class='stat-label'>Total Listens</div>
-            <div id='total-scrobbles' class='stat-value'>--</div>
-        </div>
-        <div style='margin-top: 5px;'>
-            <div class='stat-label'>Track Listens</div>
-            <div id='track-plays' class='stat-value'>--</div>
-        </div>
-    </div>
-
     <div class='content'>
         <img id='cover' class='album-art' src=''>
         <div class='track-container'>
-            <div id='track' class='track-name'>Waiting for music...</div>
+            <a id='track' class='track-name' target='_blank'>Waiting for music...</a>
+            <a id='mb-track' class='mb-badge' target='_blank' title='View on MusicBrainz'></a>
             <div id='loved' class='loved-icon'>♥</div>
         </div>
-        <div id='artist' class='artist-name'></div>
-        <div id='album' class='album-name'></div>
+        <div class='info-container'>
+            <a id='artist' class='artist-name' target='_blank'></a>
+            <a id='mb-artist' class='mb-badge' target='_blank' title='View on MusicBrainz'></a>
+        </div>
+        <div class='info-container'>
+            <a id='album' class='album-name' target='_blank'></a>
+            <a id='mb-album' class='mb-badge' target='_blank' title='View on MusicBrainz'></a>
+        </div>
+    </div>
+
+    <div class='stats-container'>
+        <div>
+            <div class='stat-label'>Total Listens</div>
+            <a id='total-listens' class='stat-value' target='_blank'>--</a>
+        </div>
+        <div style='margin-top: 5px;'>
+            <div class='stat-label'>Track Listens</div>
+            <a id='track-plays' class='stat-value' target='_blank'>--</a>
+        </div>
     </div>
 
     <div class='status' id='status'>CONNECTING...</div>
@@ -157,6 +187,11 @@
         const MOUSE_TIMEOUT = 3 * 1000 // 3 seconds
         const POLL_MUSIC_MS = 10 * 1000; // 10 seconds
         const POLL_WEATHER_MS = 10 * 60 * 1000; // 10 minutes
+
+        const MB_LOGO_SVG = `<img src="https://musicbrainz.org/favicon.ico" alt="MB" />`;
+        document.getElementById('mb-track').innerHTML = MB_LOGO_SVG;
+        document.getElementById('mb-artist').innerHTML = MB_LOGO_SVG;
+        document.getElementById('mb-album').innerHTML = MB_LOGO_SVG;
 
         let timeout;
 
@@ -180,9 +215,13 @@
         async function fetchWeather() {
             try {
                 const res = await fetch('api/weather');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
                 const data = await res.json();
-                if (data.error) throw new Error(data.error);
+                if (data.error) {
+                    throw new Error(data.error);
+                }
                 document.getElementById('weather-location').innerText = data.location;
                 document.getElementById('weather-temperature').innerText = data.temperature + '°C';
                 document.getElementById('weather-emoji').innerText = data.emoji;
@@ -205,23 +244,54 @@
 
         let state = null;
 
+        function setLink(id, text, url) {
+            const element = document.getElementById(id);
+            if (text !== null) {
+                element.innerText = text;
+            }
+            if (url) {
+                element.href = url;
+                element.style.pointerEvents = 'auto';
+            } else {
+                element.removeAttribute('href');
+                element.style.pointerEvents = 'none';
+            }
+        }
+
+        function setMBLink(id, url) {
+            const element = document.getElementById(id);
+            if (url) {
+                element.href = url;
+                element.style.display = 'block';
+            } else {
+                element.style.display = 'none';
+            }
+        }
+
         async function fetchNowPlaying() {
             try {
                 const res = await fetch('api/nowplaying');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
                 const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                document.getElementById('total-scrobbles').innerText = parseInt(data.total_listens).toLocaleString();
-                document.getElementById('track-plays').innerText = parseInt(data.track_listens).toLocaleString();
-                document.getElementById('status').innerText = data.playing ? 'NOW PLAYING' : 'LAST SCROBBLE';
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                setLink('total-listens', parseInt(data.total_listens).toLocaleString(), data.user_url);
+                setLink('track-plays', parseInt(data.track_listens).toLocaleString(), data.track_library_url);
+                setLink('status', data.playing ? 'NOW PLAYING' : 'LAST LISTEN', data.user_url);
                 const currentState = data.track + '|' + data.artist + '|' + data.playing;
                 if (currentState === state) {
                     return;
                 }
                 state = currentState;
-                document.getElementById('track').innerText = data.track || 'Unknown Track';
-                document.getElementById('artist').innerText = data.artist || 'Unknown Artist';
-                document.getElementById('album').innerText = data.album || '';
+                setLink('track', data.track || 'Unknown Track', data.track_url);
+                setLink('artist', data.artist || 'Unknown Artist', data.artist_url);
+                setLink('album', data.album || '', data.album_url);
+                setMBLink('mb-track', data.track_mb_url);
+                setMBLink('mb-artist', data.artist_mb_url);
+                setMBLink('mb-album', data.album_mb_url);
                 document.getElementById('loved').style.display = data.loved ? 'block' : 'none';
                 const cover = document.getElementById('cover');
                 const bg = document.getElementById('bg');
@@ -235,15 +305,7 @@
                 }
             } catch (err) {
                 console.error('NowPlaying error:', err);
-                document.getElementById('track').innerText = err.message;
-                document.getElementById('artist').innerText = '';
-                document.getElementById('album').innerText = '';
-                document.getElementById('cover').style.display = 'none';
-                document.getElementById('bg').style.backgroundImage = 'none';
-                document.getElementById('total-scrobbles').innerText = '--';
-                document.getElementById('track-plays').innerText = '--';
-                document.getElementById('loved').style.display = 'none';
-                document.getElementById('status').innerText = 'ERROR';
+                setLink('status', 'API RECONNECTING...', null);
             }
         }
 
