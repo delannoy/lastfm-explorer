@@ -132,6 +132,41 @@
             font-size: 1.25rem; color: rgba(255,255,255,0.4); z-index: 10;
             text-transform: uppercase; letter-spacing: 1.5px;
         }
+        .lyrics-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; border-radius: 4px; cursor: pointer; font-size: 1.1rem;
+            padding: 4px 8px; margin-left: 5px; transition: all 0.2s; display: none;
+        }
+        .lyrics-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .lyrics-wrapper {
+            position: relative; display: inline-block;
+        }
+        .lyrics-wrapper:hover .lyrics-popup {
+            display: flex;
+        }
+        .lyrics-popup {
+            display: none; position: absolute; 
+            top: 50%; left: 100%; transform: translateY(-50%);
+            margin-left: 15px; width: 350px; max-width: 45vw; max-height: 60vh; z-index: 50;
+            background: rgba(15, 15, 15, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px);
+            flex-direction: column; cursor: default;
+        }
+        .lyrics-popup::after {
+            content: ''; position: absolute; 
+            top: 0; bottom: 0; left: -15px; width: 15px;
+        }
+        .lyrics-header {
+            display: flex; justify-content: center; align-items: center;
+            padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600; font-size: 1rem; color: #fff; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .lyrics-content {
+            padding: 20px; overflow-y: auto; white-space: pre-wrap; font-size: 0.95rem;
+            line-height: 1.6; color: #ddd; text-align: center;
+        }
         .date-wrapper {
             position: relative; display: inline-block; cursor: default;
         }
@@ -211,6 +246,13 @@
         <div class='track-container'>
             <a id='track' class='track-name' target='_blank'>Waiting for music...</a>
             <a id='mb-track' class='mb-badge' target='_blank' title='View on MusicBrainz'></a>
+            <div class='lyrics-wrapper'>
+                <button id='lyrics-btn' class='lyrics-btn' title='View Lyrics'>📝</button>
+                <div id='lyrics-popup' class='lyrics-popup'>
+                    <div class='lyrics-header'><span id='lyrics-title'>Lyrics</span></div>
+                    <div id='lyrics-content' class='lyrics-content'>Loading...</div>
+                </div>
+            </div>
             <a id='loved' class='loved-icon' target='_blank'>♥</a>
         </div>
         <div class='info-container'>
@@ -239,28 +281,32 @@
     <script>
 
         const DOM = {
-            time: document.getElementById('time'),
-            date: document.getElementById('date'),
+            album: document.getElementById('album'),
+            artist: document.getElementById('artist'),
+            bg: document.getElementById('bg'),
             calendarPopup: document.getElementById('calendar-popup'),
-            weatherLocation: document.getElementById('weather-location'),
-            weatherTemperature: document.getElementById('weather-temperature'),
-            weatherEmoji: document.getElementById('weather-emoji'),
-            weatherDescription: document.getElementById('weather-description'),
-            weatherForecast: document.getElementById('weather-forecast'),
-            weatherContainer: document.getElementById('weather-container'),
             cover: document.getElementById('cover'),
             coverLink: document.getElementById('cover-link'),
-            bg: document.getElementById('bg'),
+            date: document.getElementById('date'),
             track: document.getElementById('track'),
-            mbTrack: document.getElementById('mb-track'),
             loved: document.getElementById('loved'),
-            artist: document.getElementById('artist'),
+            lyricsBtn: document.getElementById('lyrics-btn'),
+            lyricsContent: document.getElementById('lyrics-content'),
+            lyricsPopup: document.getElementById('lyrics-popup'),
+            lyricsTitle: document.getElementById('lyrics-title'),
             mbArtist: document.getElementById('mb-artist'),
-            album: document.getElementById('album'),
             mbAlbum: document.getElementById('mb-album'),
+            mbTrack: document.getElementById('mb-track'),
+            status: document.getElementById('status'),
+            time: document.getElementById('time'),
             totalListens: document.getElementById('total-listens'),
             trackPlays: document.getElementById('track-plays'),
-            status: document.getElementById('status')
+            weatherContainer: document.getElementById('weather-container'),
+            weatherDescription: document.getElementById('weather-description'),
+            weatherEmoji: document.getElementById('weather-emoji'),
+            weatherForecast: document.getElementById('weather-forecast'),
+            weatherLocation: document.getElementById('weather-location'),
+            weatherTemperature: document.getElementById('weather-temperature'),
         };
 
         const MOUSE_TIMEOUT = 3 * 1000 // 3 seconds
@@ -388,6 +434,26 @@
         fetchWeather();
         setInterval(fetchWeather, POLL_WEATHER_MS);
 
+        async function updateLyrics(artist, track) {
+            DOM.lyricsBtn.style.display = 'none';
+            DOM.lyricsContent.innerText = 'Loading...';
+            DOM.lyricsTitle.innerText = 'Lyrics';
+            if (!artist || !track) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track)}`);
+                const lyricsData = await res.json();
+                if (lyricsData.lyrics && !lyricsData.error && lyricsData.lyrics !== 'No lyrics available / Instrumental') {
+                    DOM.lyricsTitle.innerText = track;
+                    DOM.lyricsContent.innerText = lyricsData.lyrics;
+                    DOM.lyricsBtn.style.display = 'inline-block';
+                }
+            } catch (err) {
+                console.error('Lyrics fetch error:', err);
+            }
+        }
+
         let state = null;
 
         async function fetchNowPlaying() {
@@ -402,12 +468,15 @@
                 }
                 setLink(DOM.totalListens, parseInt(data.total_listens).toLocaleString(), data.user_url + '/library');
                 setLink(DOM.trackPlays, parseInt(data.track_listens).toLocaleString(), data.track_library_url);
-                setLink(DOM.status, data.playing ? data.user.toUpperCase() + ': NOW PLAYING' : data.user.toUpperCase() + ': LAST LISTEN', data.playing ? data.user_url + '/now' : data.user_url);
+                const statusText = data.playing ? data.user.toUpperCase() + ': NOW PLAYING' : data.user.toUpperCase() + ': LAST LISTEN';
+                const statusURL = data.playing ? data.user_url + '/now' : data.user_url;
+                setLink(DOM.status, statusText, statusURL);
                 const currentState = data.track + '|' + data.artist + '|' + data.playing;
                 if (currentState === state) {
                     return;
                 }
                 state = currentState;
+                updateLyrics(data.artist, data.track);
                 setLink(DOM.track, data.track || 'Unknown Track', data.track_url);
                 setLink(DOM.artist, data.artist || 'Unknown Artist', data.artist_url);
                 setLink(DOM.album, data.album || '', data.album_url);
@@ -424,7 +493,7 @@
                     DOM.cover.src = data.image;
                     DOM.cover.style.display = 'block';
                     DOM.coverLink.href = data.image;
-                    bg.style.backgroundImage = `url(${data.image})`;
+                    DOM.bg.style.backgroundImage = `url(${data.image})`;
                 } else {
                     DOM.cover.style.display = 'none';
                     DOM.coverLink.removeAttribute('href');

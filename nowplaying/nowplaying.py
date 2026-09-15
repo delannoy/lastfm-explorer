@@ -109,6 +109,16 @@ def lastfm_track_stats(user: str, api_key: str, track_name: str, artist_name: st
         'album_url': track_info.get('album', {}).get('url', ''),
     }
 
+def lyrics(artist: str, track: str) -> dict:
+    if not artist or not track:
+        return {'error': 'Missing artist or track'}
+    params = {'artist_name': artist, 'track_name': track}
+    url = f'https://lrclib.net/api/get?{urllib.parse.urlencode(params)}'
+    data = query(url=url)
+    if 'error' in data:
+        return {'error': 'Lyrics not found.'}
+    return {'lyrics': data.get('plainLyrics') or 'No lyrics available / Instrumental'}
+
 @functools.lru_cache(maxsize=1)
 def resolve_location(latitude: float, longitude: float) -> str:
     '''Resolve coordinates to a city name.'''
@@ -152,6 +162,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(INDEX_HTML)
+        elif self.path.startswith('/api/lyrics'):
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            artist, track = qs.get('artist', [''])[0], qs.get('track', [''])[0]
+            self.wfile.write(json.dumps(lyrics(artist, track)).encode('utf-8'))
         elif self.path == '/api/nowplaying':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
