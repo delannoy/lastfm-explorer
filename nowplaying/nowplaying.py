@@ -55,6 +55,13 @@ def query(url: str) -> dict:
         logging.error(f'Request failed for {url}: {e}')
         return {'error': 'Connection failed'}
 
+def deezer_album_art(artist: str, album: str) -> str:
+    q = f'artist:"{artist}" album:"{album}"'
+    response = query(url=f'https://api.deezer.com/search/album?{urllib.parse.urlencode(dict(q=q))}')
+    if (response['total'] != 1):
+        return ''
+    return response['data'][0].get('cover_xl')
+
 def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
     '''Query and parse the latest listen from LASTFM.'''
     params = dict(method='user.getrecenttracks', user=user, api_key=api_key, format='json', limit=1)
@@ -76,14 +83,14 @@ def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
         'artist': artist_name,
         'album': album_name,
         'track': track_name,
-        'image': images[-1].get('#text', '') if images else '',
+        'image': deezer_album_art(artist=artist_name, album=album_name) or images[-1].get('#text', ''),
         'total_listens': data.get('recenttracks', {}).get('@attr', {}).get('total', 0),
         'track_listens': stats['track_listens'],
         'loved': stats['loved'],
         'user_url': f'https://www.last.fm/user/{urllib.parse.quote_plus(user)}',
-        'artist_url': stats['artist_url'],
-        'album_url': stats['album_url'],
-        'track_url': stats['track_url'],
+        'artist_url': stats['artist_url'] or f'https://www.last.fm/music/{artist_name}',
+        'album_url': stats['album_url'] or f'https://www.last.fm/music/{artist_name}/{album_name}',
+        'track_url': stats['track_url'] or f'https://www.last.fm/music/{artist_name}/_/{track_name}',
         'track_library_url': f'https://www.last.fm/user/{urllib.parse.quote_plus(user)}/library/music/{urllib.parse.quote_plus(artist_name)}/_/{urllib.parse.quote_plus(track_name)}',
         'artist_mb_url': f'https://musicbrainz.org/artist/{artist_mbid}' if artist_mbid else '',
         'album_mb_url': f'https://musicbrainz.org/release/{album_mbid}' if album_mbid else '',
@@ -108,16 +115,6 @@ def lastfm_track_stats(user: str, api_key: str, track_name: str, artist_name: st
         'artist_url': track_info.get('artist', {}).get('url', ''),
         'album_url': track_info.get('album', {}).get('url', ''),
     }
-
-def lyrics(artist: str, track: str) -> dict:
-    if not artist or not track:
-        return {'error': 'Missing artist or track'}
-    params = {'artist_name': artist, 'track_name': track}
-    url = f'https://lrclib.net/api/get?{urllib.parse.urlencode(params)}'
-    data = query(url=url)
-    if 'error' in data:
-        return {'error': 'Lyrics not found.'}
-    return {'lyrics': data.get('plainLyrics') or 'No lyrics available / Instrumental'}
 
 @functools.lru_cache(maxsize=1)
 def resolve_location(latitude: float, longitude: float) -> str:
@@ -162,13 +159,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(INDEX_HTML)
-        elif self.path.startswith('/api/lyrics'):
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            artist, track = qs.get('artist', [''])[0], qs.get('track', [''])[0]
-            self.wfile.write(json.dumps(lyrics(artist, track)).encode('utf-8'))
         elif self.path == '/api/nowplaying':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
