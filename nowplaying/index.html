@@ -442,11 +442,12 @@
                 return;
             }
             try {
-                const res = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track)}`);
-                const lyricsData = await res.json();
-                if (lyricsData.lyrics && !lyricsData.error && lyricsData.lyrics !== 'No lyrics available / Instrumental') {
+                const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(track)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.plainLyrics) {
                     DOM.lyricsTitle.innerText = track;
-                    DOM.lyricsContent.innerText = lyricsData.lyrics;
+                    DOM.lyricsContent.innerText = data.plainLyrics;
                     DOM.lyricsBtn.style.display = 'inline-block';
                 }
             } catch (err) {
