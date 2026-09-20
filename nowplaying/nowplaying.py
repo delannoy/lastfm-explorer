@@ -42,8 +42,9 @@ WEATHER_CODES = { # https://open-meteo.com/en/docs#weather_variable_documentatio
     96: ('Thunderstorm, slight hail', '⛈️'), 99: ('Thunderstorm, heavy hail', '⛈️'),
 }
 
-def query(url: str) -> dict:
+def query(url: str, **params) -> dict:
     '''Query and parse JSON with basic error handling.'''
+    url = f'{url}?{urllib.parse.urlencode(query=params)}'
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'NowPlaying/1.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -56,17 +57,14 @@ def query(url: str) -> dict:
         return {'error': 'Connection failed'}
 
 def deezer_album_art(artist: str, album: str) -> str:
-    q = f'artist:"{artist}" album:"{album}"'
-    response = query(url=f'https://api.deezer.com/search/album?{urllib.parse.urlencode(dict(q=q))}')
+    response = query(url=f'https://api.deezer.com/search/album', q=f'artist:"{artist}" album:"{album}"')
     if (response['total'] != 1):
         return ''
     return response['data'][0].get('cover_xl')
 
 def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
     '''Query and parse the latest listen from LASTFM.'''
-    params = dict(method='user.getrecenttracks', user=user, api_key=api_key, format='json', limit=1)
-    url = f'https://ws.audioscrobbler.com/2.0/?{urllib.parse.urlencode(params)}'
-    data = query(url=url)
+    data = query(url='https://ws.audioscrobbler.com/2.0/', method='user.getrecenttracks', user=user, api_key=api_key, format='json', limit=1)
     if 'error' in data:
         return data
     tracks = data.get('recenttracks', {}).get('track', [])
@@ -102,9 +100,7 @@ def lastfm_track_stats(user: str, api_key: str, track_name: str, artist_name: st
     default_stats = {'track_listens': 0, 'loved': False, 'track_url': '', 'artist_url': '', 'album_url': ''}
     if not track_name or not artist_name:
         return default_stats
-    params = dict(method='track.getInfo', user=user, api_key=api_key, format='json', artist=urllib.parse.quote(artist_name), track=urllib.parse.quote(track_name))
-    url = f'https://ws.audioscrobbler.com/2.0/?{urllib.parse.urlencode(params)}'
-    data = query(url=url)
+    data = query(url='https://ws.audioscrobbler.com/2.0/', method='track.getInfo', user=user, api_key=api_key, format='json', artist=urllib.parse.quote(artist_name), track=urllib.parse.quote(track_name))
     if 'error' in data:
         return default_stats
     track_info = data.get('track', {})
@@ -121,8 +117,7 @@ def resolve_location(latitude: float, longitude: float) -> str:
     '''Resolve coordinates to a city name.'''
     if not latitude or not longitude:
         return 'Unknown'
-    url = f'https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json' # https://nominatim.org/release-docs/latest/api/Reverse/
-    data = query(url=url)
+    data = query(url='https://nominatim.openstreetmap.org/reverse', lat=latitude, lon=longitude, format='json') # https://nominatim.org/release-docs/latest/api/Reverse/
     addr = data.get('address', {})
     return addr.get('city') or addr.get('town') or addr.get('village') or addr.get('county') or 'Unknown'
 
@@ -130,8 +125,7 @@ def weather(latitude: float, longitude: float) -> dict:
     '''https://open-meteo.com/en/docs#api_documentation'''
     if not latitude or not longitude:
         return {'error': 'Coordinates not set'}
-    url = f'https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto' # https://open-meteo.com/en/docs#daily_parameter_definition
-    data = query(url=url)
+    data = query(url='https://api.open-meteo.com/v1/forecast', latitude=latitude, longitude=longitude, current='temperature_2m,weather_code', daily='temperature_2m_max,temperature_2m_min,precipitation_probability_max', timezone='auto') # https://open-meteo.com/en/docs#daily_parameter_definition
     if 'error' in data:
         return data
     current = data.get('current', {})
