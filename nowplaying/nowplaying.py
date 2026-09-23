@@ -74,7 +74,7 @@ def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
     images = track.get('image', [])
     artist_name, album_name, track_name = track.get('artist', {}).get('#text', ''), track.get('album', {}).get('#text', ''), track.get('name', '')
     artist_mbid, album_mbid, track_mbid = track.get('artist', {}).get('mbid', ''), track.get('album', {}).get('mbid', ''), track.get('mbid', '')
-    stats = lastfm_track_stats(user, api_key, track_name, artist_name)
+    stats = lastfm_stats(user=user, api_key=api_key, artist_name=artist_name, album_name=album_name, track_name=track_name)
     return {
         'user': user,
         'playing': (track.get('@attr', {}).get('nowplaying') == 'true'),
@@ -83,6 +83,8 @@ def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
         'track': track_name,
         'image': deezer_album_art(artist=artist_name, album=album_name) or images[-1].get('#text', ''),
         'total_listens': data.get('recenttracks', {}).get('@attr', {}).get('total', 0),
+        'artist_listens': stats['artist_listens'],
+        'album_listens': stats['album_listens'],
         'track_listens': stats['track_listens'],
         'loved': stats['loved'],
         'user_url': f'https://www.last.fm/user/{urllib.parse.quote_plus(user)}',
@@ -95,22 +97,20 @@ def lastfm_nowplaying(user: str, api_key: str) -> dict[str, int|bool|str]:
         'track_mb_url': f'https://musicbrainz.org/recording/{track_mbid}' if track_mbid else '',
     }
 
-def lastfm_track_stats(user: str, api_key: str, track_name: str, artist_name: str) -> dict[str, int|bool|str]:
+def lastfm_stats(user: str, api_key: str, artist_name: str, album_name: str, track_name: str) -> dict[str, int|bool|str]:
     '''Fetches stats (playcount, loved) for a specific track from LASTFM.'''
-    default_stats = {'track_listens': 0, 'loved': False, 'track_url': '', 'artist_url': '', 'album_url': ''}
-    if not track_name or not artist_name:
-        return default_stats
-    data = query(url='https://ws.audioscrobbler.com/2.0/', method='track.getInfo', user=user, api_key=api_key, format='json', artist=urllib.parse.quote(artist_name), track=urllib.parse.quote(track_name))
-    if 'error' in data:
-        return default_stats
-    track_info = data.get('track', {})
+    artist_info = query(url='https://ws.audioscrobbler.com/2.0/', method='artist.getInfo', user=user, api_key=api_key, format='json', artist=artist_name).get('artist', {})
+    album_info = query(url='https://ws.audioscrobbler.com/2.0/', method='album.getInfo', user=user, api_key=api_key, format='json', artist=artist_name, album=album_name).get('album', {})
+    track_info = query(url='https://ws.audioscrobbler.com/2.0/', method='track.getInfo', user=user, api_key=api_key, format='json', artist=artist_name, track=track_name).get('track', {})
     return {
+        'artist_listens': int(artist_info.get('stats', {}).get('userplaycount', 0)),
+        'artist_url': artist_info.get('url', ''),
+        'album_listens': int(album_info.get('userplaycount', 0)),
+        'album_url': album_info.get('url', ''),
         'track_listens': int(track_info.get('userplaycount', 0)),
         'loved': (int(track_info.get('userloved', 0)) == 1),
         'track_url': track_info.get('url', ''),
-        'artist_url': track_info.get('artist', {}).get('url', ''),
-        'album_url': track_info.get('album', {}).get('url', ''),
-    }
+        }
 
 @functools.lru_cache(maxsize=1)
 def resolve_location(latitude: float, longitude: float) -> str:
@@ -157,7 +157,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            result = lastfm_nowplaying(LASTFM_USER, LASTFM_KEY)
+            result = lastfm_nowplaying(user=LASTFM_USER, api_key=LASTFM_KEY)
             self.wfile.write(json.dumps(result).encode('utf-8'))
         elif self.path == '/api/weather':
             self.send_response(200)
