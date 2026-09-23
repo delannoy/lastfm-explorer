@@ -35,11 +35,11 @@
             text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
         .time-display {
-            font-size: 2.5rem; font-weight: 300; margin-bottom: 2px;
+            font-size: 2.25rem; font-weight: 300; margin-bottom: 2px;
             letter-spacing: 1px; display: block;
         }
         .date-display {
-            font-size: 0.9rem; color: #ccc; text-transform: uppercase;
+            font-size: 1rem; color: #ccc; text-transform: uppercase;
             letter-spacing: 1.5px; font-weight: 500;
         }
         .weather-container {
@@ -48,18 +48,18 @@
             display: none;
         }
         .weather-temperature {
-            font-size: 2.5rem; font-weight: 300; margin-bottom: 2px;
+            font-size: 2.25rem; font-weight: 300; margin-bottom: 2px;
             letter-spacing: 1px; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
         }
         .weather-description {
-            font-size: 0.9rem; color: #ccc; text-transform: uppercase;
+            font-size: 1rem; color: #ccc; text-transform: uppercase;
             letter-spacing: 1.5px; font-weight: 500;
         }
         .weather-location {
-            font-size: 1rem; color: #ccc; font-weight: 500;
+            font-size: 0.75rem; color: #ccc; font-weight: 500;
         }
         .weather-forecast {
-            font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 5px;
+            font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 5px;
             letter-spacing: 1px; display: block;
         }
         .stats-container {
@@ -72,7 +72,7 @@
             text-transform: uppercase; letter-spacing: 1px;
         }
         .stat-value {
-            font-size: 1rem; color: #e0e0e0; font-weight: 500; display: block;
+            font-size: 0.75rem; color: #e0e0e0; font-weight: 500; display: block;
         }
         .content {
             position: absolute; z-index: 2;
@@ -94,16 +94,16 @@
             margin: 0 0 10px 0; max-width: 80%;
         }
         .track-name {
-            font-size: 2.5rem; font-weight: 700; margin: 0 0 10px 0;
+            font-size: 2.25rem; font-weight: 700; margin: 0 0 10px 0;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5); letter-spacing: -1px;
             max-width: 80%; display: block;
         }
         .loved-icon {
-            font-size: 2.2rem; color: #ff3b3b;
+            font-size: 2rem; color: #ff3b3b;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5); display: none;
         }
         .artist-name {
-            font-size: 1.75rem; color: #e0e0e0;
+            font-size: 1.5rem; color: #e0e0e0;
             font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: block;
         }
         .album-name {
@@ -134,7 +134,7 @@
         }
         .lyrics-btn {
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; border-radius: 4px; cursor: pointer; font-size: 1.1rem;
+            color: #fff; border-radius: 4px; cursor: pointer; font-size: 1rem;
             padding: 4px 8px; margin-left: 5px; transition: all 0.2s; display: none;
         }
         .lyrics-btn:hover {
@@ -164,7 +164,7 @@
             font-weight: 600; font-size: 1rem; color: #fff; text-transform: uppercase; letter-spacing: 1px;
         }
         .lyrics-content {
-            padding: 20px; overflow-y: auto; white-space: pre-wrap; font-size: 0.95rem;
+            padding: 20px; overflow-y: auto; white-space: pre-wrap; font-size: 0.75rem;
             line-height: 1.6; color: #ddd; text-align: center;
         }
         .date-wrapper {
@@ -185,10 +185,10 @@
         .cal-grid {
             display: grid; 
             grid-template-columns: 24px repeat(7, 1fr);
-            gap: 4px; text-align: center; font-size: 0.8rem;
+            gap: 4px; text-align: center; font-size: 0.75rem;
         }
         .cal-wk-num {
-            font-weight: 700; color: rgba(255, 255, 255, 0.25); font-size: 0.7rem; 
+            font-weight: 700; color: rgba(255, 255, 255, 0.25); font-size: 0.75rem;
             display: flex; align-items: center; justify-content: center; 
             background: rgba(255,255,255,0.05); border-radius: 4px; margin-right: 4px;
         }
@@ -197,7 +197,7 @@
         }
         .cal-header {
             text-align: center; font-weight: 600; color: #fff; 
-            margin-bottom: 12px; font-size: 0.9rem; letter-spacing: 1px;
+            margin-bottom: 12px; font-size: 1rem; letter-spacing: 1px;
         }
         .cal-day-name {
             font-weight: 700; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px;
@@ -271,6 +271,14 @@
             <a id='total-listens' class='stat-value' target='_blank'>--</a>
         </div>
         <div style='margin-top: 5px;'>
+            <div class='stat-label'>Artist Listens</div>
+            <a id='artist-plays' class='stat-value' target='_blank'>--</a>
+        </div>
+        <div style='margin-top: 5px;'>
+            <div class='stat-label'>Album Listens</div>
+            <a id='album-plays' class='stat-value' target='_blank'>--</a>
+        </div>
+        <div style='margin-top: 5px;'>
             <div class='stat-label'>Track Listens</div>
             <a id='track-plays' class='stat-value' target='_blank'>--</a>
         </div>
@@ -282,7 +290,9 @@
 
         const DOM = {
             album: document.getElementById('album'),
+            albumPlays: document.getElementById('album-plays'),
             artist: document.getElementById('artist'),
+            artistPlays: document.getElementById('artist-plays'),
             bg: document.getElementById('bg'),
             calendarPopup: document.getElementById('calendar-popup'),
             cover: document.getElementById('cover'),
@@ -468,6 +478,9 @@
                     throw new Error(data.error);
                 }
                 setLink(DOM.totalListens, parseInt(data.total_listens).toLocaleString(), data.user_url + '/library');
+                setLink(DOM.artistPlays, parseInt(data.artist_listens).toLocaleString(), `${data.user_url}/library/music/${encodeURIComponent(data.artist)}`);
+                const albumUrl = data.album ? `${data.user_url}/library/music/${encodeURIComponent(data.artist)}/${encodeURIComponent(data.album)}` : null;
+                setLink(DOM.albumPlays, parseInt(data.album_listens).toLocaleString(), albumUrl);
                 setLink(DOM.trackPlays, parseInt(data.track_listens).toLocaleString(), data.track_library_url);
                 const statusText = data.playing ? data.user.toUpperCase() + ': NOW PLAYING' : data.user.toUpperCase() + ': LAST LISTEN';
                 const statusURL = data.playing ? data.user_url + '/now' : data.user_url;
